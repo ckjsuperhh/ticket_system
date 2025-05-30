@@ -2228,11 +2228,11 @@ public:
 };
 struct user_info {
 	char password[31]{};
-	char name[11]{};
+	char name[16]{};
 	char mail[31]{};
 	int privilege{};
 	user_info()=default;
-	user_info(char password[31],char name[11],char mail[31], const int privilege) {
+	user_info(char password[31],char name[16],char mail[31], const int privilege) {
 		strcpy(this->password, password);
 		strcpy(this->name,name);
 		strcpy(this->mail,mail);
@@ -2257,9 +2257,16 @@ struct CharArrayHash {
 		return hash;
 	}
 };
+struct train_info {
+
+};
 inline BPT<char[21],int> user_file;//存儲用戶名到存儲地址的映射
-inline MemoryRiver_vector<user_info> user_storage;//利用地址存儲特定的info
+inline MemoryRiver_vector<user_info> user_storage;//利用地址存儲特定用户的info
 inline sjtu::unordered_set<std::string> login_state;//存儲有哪些處於登陸狀態
+inline BPT<char[21],int> train_file;//存儲火车ID到存儲地址的映射
+inline MemoryRiver_vector<train_info> train_storage;//利用地址存儲特定火车的静态info
+
+
 #pragma once
 
 #endif

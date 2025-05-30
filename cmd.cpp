@@ -44,9 +44,9 @@ bool cmd::check_privilege(const int x) {
     return false;
 }
 void cmd::analyse(const string & a) {
-        std::cout<<a<<std::endl;
+        // std::cout<<a<<std::endl;
         std::string str;
-        std::string c, u, p, n, m, g;
+        std::string c, u, p, n, m, g,i,s,x,t,o,d,y;
         int cnt = 0;
         sjtu::vector<string> tokens;
         int l = 0;
@@ -90,7 +90,7 @@ void cmd::analyse(const string & a) {
                     c=tokens[i+1];
                 }
             }
-            std::cout<<time<<" "<<user::add_user(char_more<char[21]>(c).get_char().data(),char_more<char[21]>(u).get_char().data(),char_more<char[31]>(p).get_char().data(),char_more<char[11]>(n).get_char().data(),char_more<char[31]>(m).get_char().data(),std::stoi(g))<<std::endl;
+            std::cout<<time<<" "<<user::add_user(char_more<char[21]>(c).get_char().data(),char_more<char[21]>(u).get_char().data(),char_more<char[31]>(p).get_char().data(),char_more<char[16]>(n).get_char().data(),char_more<char[31]>(m).get_char().data(),std::stoi(g))<<std::endl;
         }else if (tokens[0]=="login") {
             for (int i=1;i<4;i+=2) {
                 if (tokens[i]=="-p") {
@@ -150,13 +150,13 @@ void cmd::analyse(const string & a) {
                 }else {
                     char cur[21];
                     strcpy(cur,char_more<char[21]>(c).get_char().data());
-                    const auto a=user_file.search(cur);
-                    if (a.empty()) {
+                    const auto r=user_file.search(cur);
+                    if (r.empty()) {
                         std::cout<<time<<" "<<-1<<std::endl;//cur不存在
                     }else if (login_state.find(cur)==login_state.end()) {
                         std::cout<<time<<" "<<-1<<std::endl;//并沒有登錄
                     }else if (c==u) {
-                        if (const auto up=user_storage.read(a[0]); flag[2]==true&&std::stoi(g)>=up.privilege) {
+                        if (const auto up=user_storage.read(r[0]); flag[2]==true&&std::stoi(g)>=up.privilege) {
                             std::cout<<time<<" "<<-1<<std::endl;//如果權限錯誤，放棄修改
                         }else {
                             std::string out;
@@ -179,12 +179,12 @@ void cmd::analyse(const string & a) {
                             }else{
                                 out+=std::to_string(up.privilege);
                             }
-                            char pa[31],na[11],ma[31];
+                            char pa[31],na[16],ma[31];
                             strcpy(pa,flag[3]==1?char_more<char[31]>(p).get_char().data():up.password);
-                            strcpy(na,flag[0]==1?char_more<char[11]>(n).get_char().data():up.name);
+                            strcpy(na,flag[0]==1?char_more<char[16]>(n).get_char().data():up.name);
                             strcpy(ma,flag[1]==1?char_more<char[31]>(m).get_char().data():up.mail);
-                            int pr=flag[2]==0?std::stoi(g):up.privilege;
-                            user_storage.update({pa,na,ma,pr},a[0]);
+                            int pr=flag[2]==1?std::stoi(g):up.privilege;
+                            user_storage.update({pa,na,ma,pr},r[0]);
                             std::cout<<time<<" "<<out<<std::endl;
                         }
                     }else{
@@ -194,10 +194,10 @@ void cmd::analyse(const string & a) {
                         if (b.empty()) {
                             std::cout<<time<<" "<<-1<<std::endl;//u不存在
                         }else {
-                            const auto p1=user_storage.read(a[0]),p2=user_storage.read(b[0]);
+                            const auto p1=user_storage.read(r[0]),p2=user_storage.read(b[0]);
                             if (p1.privilege<=p2.privilege) {
                                 std::cout<<time<<" "<<-1<<std::endl;//cur權限過低
-                            }else if (flag[2]&&std::stoi(g)>=p2.privilege) {
+                            }else if (flag[2]&&std::stoi(g)>p2.privilege) {
                                 std::cout<<time<<" "<<-1<<std::endl;//需要修改權限并且把權限變高
                             }else {
                                 std::string out;
@@ -216,16 +216,16 @@ void cmd::analyse(const string & a) {
                                 }
                                 out+=" ";
                                 if (flag[2]) {
-                                    out+=p;
+                                    out+=g;
                                 }else{
                                     out+=std::to_string(p2.privilege);
                                 }
-                                char pa[31],na[11],ma[31];
+                                char pa[31],na[16],ma[31];
                                 strcpy(pa,flag[3]==1?char_more<char[31]>(p).get_char().data():p2.password);
-                                strcpy(na,flag[0]==1?char_more<char[11]>(n).get_char().data():p2.name);
+                                strcpy(na,flag[0]==1?char_more<char[16]>(n).get_char().data():p2.name);
                                 strcpy(ma,flag[1]==1?char_more<char[31]>(m).get_char().data():p2.mail);
-                                int pr=flag[2]==0?std::stoi(g):p2.privilege;
-                                user_storage.update({pa,na,ma,pr},a[0]);
+                                int pr=flag[2]==1?std::stoi(g):p2.privilege;
+                                user_storage.update({pa,na,ma,pr},b[0]);
                                 std::cout<<time<<" "<<out<<std::endl;
                             }
                         }
@@ -236,6 +236,31 @@ void cmd::analyse(const string & a) {
                 login_state.clear();
                 std::cout<<time<<" bye"<<std::endl;
                 exit(0);
+            }else if (tokens[0]=="add_train") {
+                for (int II=1;II<tokens.size()-1;II+=2) {
+                    if (tokens[II]=="-i") {
+                        i=tokens[II+1];
+                    }else if (tokens[II]=="-n") {
+                        n=tokens[II+1];
+                    }else if (tokens[II]=="-m") {
+                        m=tokens[II+1];
+                    }else if (tokens[II]=="-s") {
+                        s=tokens[II+1];
+                    }else if (tokens[II]=="-p") {
+                        p=tokens[II+1];
+                    }else if (tokens[II]=="-x") {
+                        x=tokens[II+1];
+                    }else if (tokens[II]=="-t") {
+                        t=tokens[II+1];
+                    }else if (tokens[II]=="-o") {
+                        o=tokens[II+1];
+                    }else if (tokens[II]=="-d") {
+                        d=tokens[II+1];
+                    }else if (tokens[II]=="-y") {
+                        y=tokens[II+1];
+                    }
+                }
+                // std::cout<<time<<" "<<train::add_train(char_more<char[21]>(i).get_char().data(),std::stoi(n),std::stoi(m),s,p,char_more<char[6]>(x).get_char().data(),t,o,d,y[0])<<std::endl;
             }
         }
 

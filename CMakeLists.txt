@@ -10,4 +10,5 @@ add_executable(Ticket_System_2025_master main.cpp
         DataBase.h
         cmd.h
         user.cpp
-        cmd.cpp)
+        cmd.cpp
+        train.cpp)

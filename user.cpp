@@ -102,22 +102,22 @@ std::string user::query_profile(char cur[21], char username[21]) {
         if (p1.privilege==10) {
             privilege="10";
         }else {
-            privilege=std::to_string('0'+p1.privilege);
+            privilege=std::to_string(p1.privilege);
         }
         return user+" "+name+" "+mail+" "+privilege;
     }
     const auto b=user_file.search(username);
     if (b.empty()) {
         return "-1";
-    }
-    if (const auto p2=user_storage.read(b[0]); p1.privilege>p2.privilege) {
+    }const auto p2=user_storage.read(b[0]);
+    if (; p1.privilege>p2.privilege) {
         user=username;
         name=p2.name;
         mail=p2.mail;
         if (p2.privilege==10) {
             privilege="10";
         }else {
-            privilege=std::to_string('0'+p2.privilege);
+            privilege=std::to_string(p2.privilege);
         }
         return user+" "+name+" "+mail+" "+privilege;
     }
