@@ -3,7 +3,7 @@ project(Ticket_System_2025_master)
 
 set(CMAKE_CXX_STANDARD 20)
 
-add_executable(Ticket_System_2025_master main.cpp
+add_executable(code main.cpp
         user.h
         train.h
         ticket.h
