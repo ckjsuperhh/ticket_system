@@ -11,4 +11,5 @@ add_executable(code main.cpp
         cmd.h
         user.cpp
         cmd.cpp
-        train.cpp)
+        train.cpp
+        ticket.cpp)
