@@ -318,12 +318,12 @@ int train::date(char d1[6], char d2[6]) {
 }
 
 void train::calculate_time(sjtu::vector<std::string> &a, int &month, int &date, int &hour, int &minute, int traveltimes, int stopovertimes) {
-    if (const int next_day_time = 60 * (24 - hour) + (60 - minute); next_day_time > traveltimes) {
+    if (const int next_day_time = 60 * (23 - hour) + (60 - minute); next_day_time > traveltimes) {
         cross_time(hour, minute, traveltimes);
     } else {
         train::next_day(month, date);
         minute = hour = 0;
-        cross_time(minute, hour, traveltimes - next_day_time);
+        cross_time(hour, minute, traveltimes - next_day_time);
     }
     std::string timer;
     timer.push_back('0');
@@ -350,12 +350,12 @@ void train::calculate_time(sjtu::vector<std::string> &a, int &month, int &date, 
         timer += std::to_string(minute);
     }
     a[0] = timer;
-    if (const int next_day_time = 60 * (24 - hour) + (60 - minute); next_day_time > stopovertimes) {
+    if (const int next_day_time = 60 * (23 - hour) + (60 - minute); next_day_time > stopovertimes) {
         cross_time(hour, minute, stopovertimes);
     } else {
         train::next_day(month, date);
         minute = hour = 0;
-        cross_time(minute, hour, stopovertimes - next_day_time);
+        cross_time(hour, minute, stopovertimes - next_day_time);
     }
     timer.clear();
     timer.push_back('0');
@@ -454,34 +454,24 @@ struct line {
 };
 
 struct Less_time {
-    bool operator()(line a, line b) const {
+    bool operator()(const line &a, const line &b) const {
         if (a.time < b.time) {
             return true;
         }
         if (a.time == b.time) {
-            if (a.cost < b.cost) {
-                return true;
-            }
-            if (a.cost == b.cost) {
-                return strcmp(a.id, b.id) < 0;
-            }
+            return strcmp(a.id, b.id) < 0;
         }
         return false;
     }
 };
 
 struct Less_cost {
-    bool operator()(line a, line b) const {
+    bool operator()(const line &a, const line &b) const {
         if (a.cost < b.cost) {
             return true;
         }
         if (a.cost == b.cost) {
-            if (a.time < b.time) {
-                return true;
-            }
-            if (a.time == b.time) {
-                return strcmp(a.id, b.id) < 0;
-            }
+            return strcmp(a.id, b.id) < 0;
         }
         return false;
     }
@@ -495,7 +485,7 @@ std::string train::query_ticket(char threshold[31], char destination[31], char t
     strcat(a, destination);
     auto b = transfer_file.search(a);
     if (b.empty()) {
-        return "-1";
+        return "0";
     }
     int  cnt(0);
     for (auto x: b) {
@@ -523,7 +513,7 @@ std::string train::query_ticket(char threshold[31], char destination[31], char t
             ss += " ";
             ss += to_accurate_time(c.arrival_hour, c.arrival_minute);
             l[cnt++] = line{
-                delta_time(c.setup_hour, c.setup_minute, c.arrival_hour,
+                delta_time(c.setup_hour, c.arrival_hour, c.setup_minute,
                            c.arrival_minute, c.arrival_nextday - c.setup_nextday),
                 c.price, c.id, threshold, destination, char_more<char[13]>(s).get_char().data(),
                 char_more<char[13]>(ss).get_char().data(), min_seat
@@ -625,7 +615,7 @@ std::string train::query_transfer(char threshold[31], char destination[31], char
                 if (min_seat1 == 0) {
                     continue;
                 }
-                int delta1 = delta_time(c1.setup_hour, c1.setup_minute, c1.arrival_hour
+                int delta1 = delta_time(c1.setup_hour, c1.arrival_hour, c1.setup_minute
                                         , c1.arrival_minute, c1.arrival_nextday - c1.setup_nextday);
                 for (auto y2: b2) {
                     auto c2 = transfer_storage.read(y2);
@@ -641,7 +631,7 @@ std::string train::query_transfer(char threshold[31], char destination[31], char
                         }
                         cnt++;
                         if (p == "time") {
-                            int delta2 = delta_time(c2.setup_hour, c2.setup_minute, c2.arrival_hour
+                            int delta2 = delta_time(c2.setup_hour, c2.arrival_hour, c2.setup_minute
                                                     , c2.arrival_minute, c2.arrival_nextday - c2.setup_nextday);
                             if (delta1 + delta2 < timer) {
                                 pos1 = y1;
@@ -688,7 +678,7 @@ std::string train::query_transfer(char threshold[31], char destination[31], char
                             }
                         } else if (p == "cost") {
                             if (c1.price + c2.price < pricer) {
-                                int delta2 = delta_time(c2.setup_hour, c2.setup_minute, c2.arrival_hour
+                                int delta2 = delta_time(c2.setup_hour,c2.arrival_hour , c2.setup_minute
                                                         , c2.arrival_minute, c2.arrival_nextday - c2.setup_nextday);
 
                                 pos1 = y1;
@@ -700,7 +690,7 @@ std::string train::query_transfer(char threshold[31], char destination[31], char
                                 pricer = c1.price + c2.price;
                                 timer = delta1 + delta2;
                             } else if (c1.price + c2.price == pricer) {
-                                int delta2 = delta_time(c2.setup_hour, c2.setup_minute, c2.arrival_hour
+                                int delta2 = delta_time(c2.setup_hour,c2.arrival_hour , c2.setup_minute
                                                         , c2.arrival_minute, c2.arrival_nextday - c2.setup_nextday);
                                 if (delta1 + delta2 < timer) {
                                     pos1 = y1;

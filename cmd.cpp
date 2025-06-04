@@ -11,7 +11,7 @@ void cmd::initialise() {
         user_storage.initialise("user_storage");
     train_file.initialise("train_file(1)","train_file(2)");
     train_storage.initialise("train_storage");
-    from_to_file.initialise("from_to_file(1)","from_to_file(2)");
+    from_to_file.initialise("s_from_to_file(1)","s_from_to_file(2)");
     transfer_file.initialise("transfer_file(1)","transfer_file(2)");
     transfer_storage.initialise("transfer_storage");
     queue_file.initialise("queue_file(1)","queue_file(2)");
@@ -127,7 +127,7 @@ void cmd::analyse(const string & a) {
             tokens.push_back(a.substr(l, r - l));
             l = r;
         }
-    if (time=="[6945]") {
+    if (time=="[133324]") {
 puts(" ");
     }
         if (tokens[0]=="add_user") {
@@ -359,6 +359,7 @@ puts(" ");
                 }
                 std::cout<<time<<" "<<train::query_transfer(char_more<char[31]>(s).get_char().data(),char_more<char[31]>(t).get_char().data(),char_more<char[6]>(d).get_char().data(),p)<<std::endl;
             }else if (tokens[0]=="buy_ticket") {
+                bool ok=false;
                 for (int II=1;II<tokens.size()-1;II+=2) {
                     if (tokens[II]=="-u") {
                         u=tokens[II+1];
@@ -372,16 +373,27 @@ puts(" ");
                         f=tokens[II+1];
                     }else if (tokens[II]=="-t") {
                         t=tokens[II+1];
+
                     }else if (tokens[II]=="-q") {
                         q=tokens[II+1];
+                        ok=true;
                     }
                 }
-                std::cout<<time<<" "<<ticket::buy_ticket(char_more<char[21]>(u).get_char().data(),
+                if (ok==0) {
+                    std::cout<<time<<" "<<ticket::buy_ticket(char_more<char[21]>(u).get_char().data(),
+                    char_more<char[21]>(i).get_char().data(),
+                    char_more<char[6]>(d).get_char().data(),
+                    char_more<char[31]>(f).get_char().data(),
+                    char_more<char[31]>(t).get_char().data(),std::stoi(n),false)<<std::endl;
+                }else {
+                    std::cout<<time<<" "<<ticket::buy_ticket(char_more<char[21]>(u).get_char().data(),
                     char_more<char[21]>(i).get_char().data(),
                     char_more<char[6]>(d).get_char().data(),
                     char_more<char[31]>(f).get_char().data(),
                     char_more<char[31]>(t).get_char().data(),std::stoi(n)
                     ,q != "false")<<std::endl;
+                }
+
             }else if (tokens[0]=="query_order") {
                 u=tokens[2];
                 std::cout<<time<<" "<<ticket::query_order(char_more<char[21]>(u).get_char().data())<<std::endl;

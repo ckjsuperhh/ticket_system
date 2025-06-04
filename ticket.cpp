@@ -7,7 +7,7 @@
 #include "cmd.h"
 #include "DataBase.h"
 #include "train.h"
-std::string ticket::buy_ticket(char username[21],char id[21],char time[6],char start_station[31],char end_station[31],const int & n, const bool t) {
+std::string ticket::buy_ticket(char username[21],char id[21],char time[6],char start_station[31],char end_station[31],const int & n, const bool t=false) {
     if (login_state.find(username)==login_state.end()) {
         return "-1";
     }
@@ -25,6 +25,9 @@ std::string ticket::buy_ticket(char username[21],char id[21],char time[6],char s
         return "-1";
     }
     auto b=train_storage.read(a[0]);
+    if (n>b.seatnum) {
+        return "-1";
+    }
     if (b.release==0) {
         return "-1";
     }
@@ -55,6 +58,9 @@ std::string ticket::buy_ticket(char username[21],char id[21],char time[6],char s
     if (train::to_date(month1,date1)<=time&&train::to_date(month2,date2)>=time) {
         int day=train::date(time,b.saledate[0])-next_,minseat(b.seatnum),price(0),sumtime(0);
         int i=I;
+        // if (day==4) {
+        //     puts("");
+        // }
         for (;i<b.num&&strcmp(b.station[i],end_station)!=0;i++) {
             sumtime+=b.traveltimes[i]+b.stopovertimes[i];
             minseat=std::min(minseat,b.remain_seat[day][i]);
@@ -165,40 +171,43 @@ int ticket::refund_ticket(char username[21],const int & n) {
         return -1;
     }
     auto a=queue_file.search(username);
-    int cnt(1);
-    for (auto &x:a) {
-        if (cnt==n) {
-            if (x.state==0) {
-                x.state=2;
-            auto p=train_storage.read(x.address);
-            int I=0;
-            for (I=0;I<p.num&&strcmp(p.station[I],x.from) != 0;I++) {}
-            for (int i=I;i<p.num&&strcmp(p.station[i],x.to)!=0;i++) {
-                p.remain_seat[x.day][i]+=n;
-            }
-            char r[31];
-            strcpy(r,x.from);
-            strcat(r,x.to);
-            process_queue(r,I);
-            queue_file.update(a,username);
-            return 0;
-            }
-        if (x.state==1) {
-            x.state=2;
-            char r[31];
-            strcpy(r,x.from);
-            strcat(r,x.to);
-            queue_storage.Val_delete(r,x);
-            queue_file.update(a,username);
-            return 0;
-        }
-            return -1;
-        }
-            cnt++;
+    if (a.size()<n) {
+        return -1;
     }
+    char ss[21];
+    strcpy(ss,username);
+    auto rr=a[a.size()-n];
+        if (a[a.size()-n].state==0) {
+            a[a.size()-n].state=2;
+            auto p=train_storage.read(a[a.size()-n].address);
+            int I=0;
+            for (I=0;I<p.num&&strcmp(p.station[I],a[a.size()-n].from) != 0;I++) {}
+            for (int i=I;i<p.num&&strcmp(p.station[i],a[a.size()-n].to)!=0;i++) {
+                p.remain_seat[a[a.size()-n].day][i]+=a[a.size()-n].buy_num;
+            }
+            train_storage.update(p,a[a.size()-n].address);
+            char r[31];
+            strcpy(r,a[a.size()-n].from);
+            strcat(r,a[a.size()-n].to);
+            process_queue(r,I);
+            queue_file.shift({ss,rr},{ss,a[a.size()-n]});
+            return 0;
+        }
+        if (a[a.size()-n].state==1) {
+            a[a.size()-n].state=2;
+            char r[31];
+            strcpy(r,a[a.size()-n].from);
+            strcat(r,a[a.size()-n].to);
+            queue_storage.Val_delete(r,a[a.size()-n]);
+            queue_file.shift({ss,rr},{ss,a[a.size()-n]});
+            return 0;
+        }
+
+
         return -1;
 
-}
+    }
+
 void ticket::process_queue(char r[63],const int &I) {
     auto p=queue_storage.search(r);
     for (auto &x:p) {

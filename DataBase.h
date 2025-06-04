@@ -1394,17 +1394,21 @@ public:
 
     void initialise(const string &FN = "") {
         if (!FN.empty()) file_name = FN;
-        if constexpr (true) {
-            fstream check_file;
+        fstream check_file;
+        check_file.open(file_name, std::ios::in|std::ios::out);
+        // if (!check_file.good()) {
+            if constexpr (true){
+            check_file.close();
             check_file.open(file_name, std::ios::out);
-            // check_file.open(file_name, std::ios::out);
             int tmp = 0;
             for (int i = 0; i < info_len; ++i)
                 check_file.write(reinterpret_cast<char *>(&tmp), sizeof(int));
-            check_file.close();
+
         }
+        check_file.close();
         file.open(file_name, std::ios::in | std::ios::out);
-        std::cerr << "I, " << file_name << ", AM FUCKING INITIALIZED." << std::endl;
+        std::cerr << "I, " << file_name << ", AM ALSO FUCKING INITIALIZED." << std::endl;
+        assert(file.good());
     }
 
     //读出第n个int的值赋给tmp，1_base
@@ -1501,14 +1505,17 @@ public:
     void initialise(const string &FN = "") {
         if (!FN.empty()) file_name = FN;
         fstream check_file;
-        check_file.open(file_name, std::ios::out);
+        check_file.open(file_name, std::ios::in|std::ios::out);
         // if (!check_file.good()) {
-        if constexpr (true){
+            if constexpr (true){
+            check_file.close();
+            check_file.open(file_name, std::ios::out);
             int tmp = 0;
             for (int i = 0; i < info_len; ++i)
                 check_file.write(reinterpret_cast<char *>(&tmp), sizeof(int));
-            check_file.close();
+
         }
+        check_file.close();
         file.open(file_name, std::ios::in | std::ios::out);
         std::cerr << "I, " << file_name << ", AM ALSO FUCKING INITIALIZED." << std::endl;
         assert(file.good());
@@ -1891,18 +1898,21 @@ public:
 
     void initialise(const string &FN = "") {
         if (!FN.empty()) file_name = FN;
-        ifstream check_file;
-        check_file.open(file_name, std::ios::in | std::ios::out);
+        fstream check_file;
+        check_file.open(file_name, std::ios::in|std::ios::out);
         // if (!check_file.good()) {
-        if constexpr (true){
-            file.open(file_name, std::ios::out);
+            if constexpr (true){
+            check_file.close();
+            check_file.open(file_name, std::ios::out);
             int tmp = 0;
             for (int i = 0; i < info_len; ++i)
-                file.write(reinterpret_cast<char *>(&tmp), sizeof(int));
-            file.close();
+                check_file.write(reinterpret_cast<char *>(&tmp), sizeof(int));
+
         }
         check_file.close();
         file.open(file_name, std::ios::in | std::ios::out);
+        std::cerr << "I, " << file_name << ", AM ALSO FUCKING INITIALIZED." << std::endl;
+        assert(file.good());
     }
 
     void get_info(int &tmp, const int n) {
