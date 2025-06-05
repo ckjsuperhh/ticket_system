@@ -16,6 +16,7 @@ void cmd::initialise() {
     transfer_storage.initialise("transfer_storage");
     queue_file.initialise("queue_file(1)","queue_file(2)");
     queue_storage.initialise("queue_storage(1)","queue_storage(2)");
+    train_queue_file.initialise("train_queue_file(1)","train_queue_file(2)");
     }
 
 bool cmd::check_username(const char x[61]) {
@@ -55,11 +56,11 @@ bool cmd::check_id(const char x[21]) {
     if (!((x[0]>='a'&&x[0]<='z')||(x[0]>='A'&&x[0]<='Z'))) {
         return true;//檢驗成功，不對勁
     }
-    for (int a=1;x[a]!='\0';a++) {
-        if (!(x[a]=='_'||(x[a]>='0'&&x[a]<='9')||(x[a]>='a'&&x[a]<='z')||(x[a]>='A'&&x[a]<='Z'))){
-            return true;
-        }
-    }
+    // for (int a=1;x[a]!='\0';a++) {
+    //     if (!(x[a]=='_'||(x[a]>='0'&&x[a]<='9')||(x[a]>='a'&&x[a]<='z')||(x[a]>='A'&&x[a]<='Z'))){
+    //         return true;
+    //     }
+    // }
     return false;
 }
 bool cmd::check_stationnum(const int x) {
@@ -127,9 +128,9 @@ void cmd::analyse(const string & a) {
             tokens.push_back(a.substr(l, r - l));
             l = r;
         }
-    if (time=="[133324]") {
-puts(" ");
-    }
+if (time=="[65560]") {
+    puts("");
+}
         if (tokens[0]=="add_user") {
             for (int i=1;i<12;i+=2) {
                 if (tokens[i]=="-g") {
@@ -293,6 +294,7 @@ puts(" ");
                 std::cout<<time<<" bye"<<std::endl;
                 exit(0);
             }else if (tokens[0]=="add_train") {
+                bool ok=0;
                 for (int II=1;II<tokens.size()-1;II+=2) {
                     if (tokens[II]=="-i") {
                         i=tokens[II+1];
@@ -300,6 +302,7 @@ puts(" ");
                         n=tokens[II+1];
                     }else if (tokens[II]=="-m") {
                         m=tokens[II+1];
+                        ok=1;
                     }else if (tokens[II]=="-s") {
                         s=tokens[II+1];
                     }else if (tokens[II]=="-p") {
@@ -316,7 +319,10 @@ puts(" ");
                         y=tokens[II+1];
                     }
                 }
-                std::cout<<time<<" "<<train::add_train(char_more<char[21]>(i).get_char().data(),std::stoi(n),std::stoi(m),s,p,char_more<char[6]>(x).get_char().data(),t,o,d,y[0])<<std::endl;
+                if (ok==1) {
+                                    std::cout<<time<<" "<<train::add_train(char_more<char[21]>(i).get_char().data(),std::stoi(n),m=="_"?2:std::stoi(m),s,p,char_more<char[6]>(x).get_char().data(),t,o,d,y[0])<<std::endl;
+                }
+
             }else if (tokens[0]=="delete_train") {
                 i=tokens[2];
                 std::cout<<time<<" "<<train::delete_train(char_more<char[21]>(i).get_char().data())<<std::endl;

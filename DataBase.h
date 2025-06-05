@@ -1362,7 +1362,7 @@ namespace sjtu {
 
 inline int n;
 struct name_and_password;
-constexpr int MAXN = 74;
+constexpr int MAXN = 174;
 
 template<class T>
 struct TreeNode {
@@ -1396,8 +1396,8 @@ public:
         if (!FN.empty()) file_name = FN;
         fstream check_file;
         check_file.open(file_name, std::ios::in|std::ios::out);
-        // if (!check_file.good()) {
-            if constexpr (true){
+        if (!check_file.good()) {
+            // if constexpr (true){
             check_file.close();
             check_file.open(file_name, std::ios::out);
             int tmp = 0;
@@ -1506,8 +1506,8 @@ public:
         if (!FN.empty()) file_name = FN;
         fstream check_file;
         check_file.open(file_name, std::ios::in|std::ios::out);
-        // if (!check_file.good()) {
-            if constexpr (true){
+        if (!check_file.good()) {
+            // if constexpr (true){
             check_file.close();
             check_file.open(file_name, std::ios::out);
             int tmp = 0;
@@ -1881,7 +1881,7 @@ public:
 
 template<class T, int info_len = 2>
 class MemoryRiver_vector {
-    //第一个数字为index:现在的最后一个Leaf类存到了哪个位置(取尾位置)
+    //第一个数字为index:现在的最后一个Leaf类存到了哪个位置(取尾位置);
 private:
     fstream file;
     string file_name;
@@ -1900,8 +1900,8 @@ public:
         if (!FN.empty()) file_name = FN;
         fstream check_file;
         check_file.open(file_name, std::ios::in|std::ios::out);
-        // if (!check_file.good()) {
-            if constexpr (true){
+        if (!check_file.good()) {
+            // if constexpr (true){
             check_file.close();
             check_file.open(file_name, std::ios::out);
             int tmp = 0;
@@ -2402,15 +2402,15 @@ struct CharArrayHash {
 
 struct train_info {
     int num{};
-    char station[100][31]{};
+    char station[35][31]{};
     int seatnum{};
-    int price[100]{};
+    int price[35]{};
     char starttimes[6]{};
-    int traveltimes[100]{};
-    int stopovertimes[100]{};
+    int traveltimes[35]{};
+    int stopovertimes[35]{};
     char saledate[2][6]{};
     char type{};
-    int remain_seat[99][100]{}; //某一天的某站
+    int remain_seat[99][35]{}; //某一天的某站
     bool release = false;
 };
 
@@ -2486,6 +2486,7 @@ struct char_31 {
 };
 
 struct queue {
+    int queue_order;
     int order;
     int address;
     int day;
@@ -2497,19 +2498,55 @@ struct queue {
     int price;
     int state;
     bool operator<(const queue &other) {
-        return order < other.order;
+        if (order < other.order) {
+            return true;
+        }
+        if (order == other.order) {
+            if (state<other.state) {
+                return true;
+            }
+        }
+        return false;
     }
     bool operator<(const queue &other)const  {
-        return order < other.order;
+        if (order < other.order) {
+            return true;
+        }
+        if (order == other.order) {
+            if (state<other.state) {
+                return true;
+            }
+        }
+        return false;
     }
     queue() =default;
-    queue(int order,int address,int day,char id[21],
+    queue(int queue_order,int order,int address,int day,char id[21],
     char from[31],char to[31],char time1[13],char time2[13],char username[21],
-    int buy_num,int price,int state):order(order),address(address),day(day),buy_num(buy_num),price(price),state(state) {
+    int buy_num,int price,int state):queue_order(queue_order),order(order),address(address),day(day),buy_num(buy_num),price(price),state(state) {
         strcpy(this->id,id),strcpy(this->from,from),strcpy(this->to,to),strcpy(this->time1,time1),strcpy(this->time2,time2),strcpy(this->username,username);
     }
 };
 
+struct queue_info{
+    int order{};
+    char username[21]{};
+    int pos{};
+    queue_info()=default;
+    queue_info(int order,char username[21],int pos):order(order),pos(pos) {
+        strcpy(this->username,username);
+    }
+    bool operator<(const queue_info&other)const {
+        if (order<other.order) {
+            return true;
+        }
+        if (order==other.order) {
+            if (strcmp(username,other.username)<0) {
+                return true;
+            }
+        }
+        return false;
+    }
+};
 inline BPT<char[21], int> user_file; //存儲用戶名到存儲地址的映射
 inline MemoryRiver_vector<user_info> user_storage; //利用地址存儲特定用户的info
 inline sjtu::unordered_set<std::string> login_state; //存儲有哪些處於登陸狀態
@@ -2519,7 +2556,8 @@ inline BPT<char[31], char_31> from_to_file; //from到to的存儲
 inline BPT<char[63], int> transfer_file; //两站(前後信息拼接起來)到換乘信息對應的地址
 inline MemoryRiver_vector<transfer_info> transfer_storage; //換乘信息的存儲位置
 inline BPT<char[21], queue> queue_file; //用戶名到排隊信息
-inline BPT<char[31], queue> queue_storage; //車次與日期到排隊信息
+inline BPT<char[31], queue_info> queue_storage; //車次與日期到排隊信息
+inline BPT<char[31],int> train_queue_file;//等车排队到第几位了
 #pragma once
 
 #endif

@@ -32,8 +32,11 @@ std::string ticket::buy_ticket(char username[21],char id[21],char time[6],char s
         return "-1";
     }
     int sum_time(0),I(0);
-    for (I=0;I<b.num&&strcmp(b.station[I],start_station)!=0;I++) {
+    for (I=0;I<b.num-1&&strcmp(b.station[I],start_station)!=0;I++) {
         sum_time+=b.traveltimes[I]+b.stopovertimes[I];
+    }
+    if (strcmp(b.station[I],start_station)!=0) {
+        return "-1";
     }
     int month1=b.saledate[0][1]-'0',date1=(b.saledate[0][3]-'0')*10+b.saledate[0][4]-'0';
     int hour1=(b.starttimes[0]-'0')*10+b.starttimes[1]-'0',minute1=(b.starttimes[3]-'0')*10+b.starttimes[4]-'0';
@@ -51,20 +54,19 @@ std::string ticket::buy_ticket(char username[21],char id[21],char time[6],char s
         train::next_day(month,date);
         train::next_day(month2,date2);
     }
-    std::string time2;
     std::string time1 = time;
     time1.push_back(' ');
     time1+=train::to_accurate_time(hour1,minute1);
     if (train::to_date(month1,date1)<=time&&train::to_date(month2,date2)>=time) {
         int day=train::date(time,b.saledate[0])-next_,minseat(b.seatnum),price(0),sumtime(0);
         int i=I;
-        // if (day==4) {
-        //     puts("");
-        // }
-        for (;i<b.num&&strcmp(b.station[i],end_station)!=0;i++) {
+        for (;i<b.num-1&&strcmp(b.station[i],end_station)!=0;i++) {
             sumtime+=b.traveltimes[i]+b.stopovertimes[i];
             minseat=std::min(minseat,b.remain_seat[day][i]);
             price+=b.price[i];
+        }
+        if (strcmp(b.station[i],end_station)!=0) {
+            return "-1";
         }
         sumtime-=b.stopovertimes[i-1];
         train::calculate_time(month1,date1,hour1,minute1,sumtime);
@@ -77,44 +79,46 @@ std::string ticket::buy_ticket(char username[21],char id[21],char time[6],char s
             train::next_day(month,date);
             train::next_day(month3,date3);
         }
-        time2=train::to_date(month3,date3);
+        std::string time2 = train::to_date(month3, date3);
         time2+=" ";
         time2+=train::to_accurate_time(hour1,minute1);
         if (minseat>=n) {
-            for (int i1=I;i1<b.num&&strcmp(b.station[i1],end_station)!=0;i1++) {
+            for (int i1=I;i1<b.num-1&&strcmp(b.station[i1],end_station)!=0;i1++) {
                 b.remain_seat[day][i1]-=n;
             }
             train_storage.update(b,a[0]);
             if (const auto queues =queue_file.search(username); queues.empty()) {
-                queue_file.insert(username,{1,a[0],day,id,start_station,end_station,char_more<char[31]>(time1).get_char().data(),char_more<char[31]>(time2).get_char().data(),char_more<char[31]>(username).get_char().data(),n,price,0});
+                queue_file.insert(username,{-1,1,a[0],day,id,start_station,end_station,char_more<char[13]>(time1).get_char().data(),
+                    char_more<char[13]>(time2).get_char().data(),char_more<char[21]>(username).get_char().data(),n,price,0});
             }else {
-                queue_file.insert(username,{queues.size()+1,a[0],day,id,start_station,end_station,char_more<char[31]>(time1).get_char().data(),char_more<char[31]>(time2).get_char().data(),char_more<char[31]>(username).get_char().data(),n,price,0});
-            }
-            char p[31];
-            strcpy(p,id);
-            strcat(p,time);
-            if (const auto r =queue_file.search(p); r.empty()) {
-                queue_storage.insert(p,{1,a[0],day,id,start_station,end_station,char_more<char[31]>(time1).get_char().data(),char_more<char[31]>(time2).get_char().data(),char_more<char[31]>(username).get_char().data(),n,price,0});
-            }else {
-                queue_storage.insert(p,{r.size()+1,a[0],day,id,start_station,end_station,char_more<char[31]>(time1).get_char().data(),char_more<char[31]>(time2).get_char().data(),char_more<char[31]>(username).get_char().data(),n,price,0});
+                queue_file.insert(username,{-1,queues.size()+1,a[0],day,id,start_station,end_station,char_more<char[13]>(time1).get_char().data(),
+                    char_more<char[13]>(time2).get_char().data(),char_more<char[21]>(username).get_char().data(),n,price,0});
             }
             return std::to_string(n*price);
         }
         if (t==0) {
             return "-1";
         }
-        if (const auto queues =queue_file.search(username); queues.empty()) {
-            queue_file.insert(username,{1,a[0],day,id,start_station,end_station,char_more<char[31]>(time1).get_char().data(),char_more<char[31]>(time2).get_char().data(),char_more<char[31]>(username).get_char().data(),n,price,1});
-        }else {
-            queue_file.insert(username,{queues.size()+1,a[0],day,id,start_station,end_station,char_more<char[31]>(time1).get_char().data(),char_more<char[31]>(time2).get_char().data(),char_more<char[31]>(username).get_char().data(),n,price,1});
-        }
+        int order=0;
         char p[31];
         strcpy(p,id);
-        strcat(p,time);
-        if (const auto r =queue_file.search(p); r.empty()) {
-            queue_storage.insert(p,{1,a[0],day,id,start_station,end_station,char_more<char[31]>(time1).get_char().data(),char_more<char[31]>(time2).get_char().data(),char_more<char[31]>(username).get_char().data(),n,price,1});
+        strcat(p,char_more<char[3]>(std::to_string(day)).get_char().data());
+        auto Int=train_queue_file.search(p);
+        if (const auto queues =queue_file.search(username); queues.empty()) {
+            order=1;
+            queue_file.insert(username,{Int.empty()?1:Int[0],1,a[0],day,id,start_station,end_station,char_more<char[31]>(time1).get_char().data(),
+                char_more<char[31]>(time2).get_char().data(),char_more<char[31]>(username).get_char().data(),n,price,1});
         }else {
-            queue_storage.insert(p,{r.size()+1,a[0],day,id,start_station,end_station,char_more<char[31]>(time1).get_char().data(),char_more<char[31]>(time2).get_char().data(),char_more<char[31]>(username).get_char().data(),n,price,1});
+            order=queues.size()+1;
+            queue_file.insert(username,{Int.empty()?1:Int[0],queues.size()+1,a[0],day,id,start_station,end_station,char_more<char[31]>(time1).get_char().data(),
+                char_more<char[31]>(time2).get_char().data(),char_more<char[31]>(username).get_char().data(),n,price,1});
+        }
+        if ( Int.empty()) {
+            train_queue_file.insert(p,1);
+            queue_storage.insert(p,{1,username,order});
+        }else {
+            queue_storage.insert(p,{Int[0],username,order});
+            train_queue_file.shift({p,Int[0]},{p,Int[0]+1});
         }
         return"queue";
     }
@@ -127,7 +131,6 @@ std::string ticket::query_order(char username[21]) {
     if (cmd::check_username(username)) {
         return "-1";
     }
-
     auto a=queue_file.search(username);
     if (a.empty()) {
         return "0";
@@ -182,58 +185,51 @@ int ticket::refund_ticket(char username[21],const int & n) {
             auto p=train_storage.read(a[a.size()-n].address);
             int I=0;
             for (I=0;I<p.num&&strcmp(p.station[I],a[a.size()-n].from) != 0;I++) {}
-            for (int i=I;i<p.num&&strcmp(p.station[i],a[a.size()-n].to)!=0;i++) {
+            for (int i=I;i<p.num-1&&strcmp(p.station[i],a[a.size()-n].to)!=0;i++) {
                 p.remain_seat[a[a.size()-n].day][i]+=a[a.size()-n].buy_num;
             }
             train_storage.update(p,a[a.size()-n].address);
             char r[31];
-            strcpy(r,a[a.size()-n].from);
-            strcat(r,a[a.size()-n].to);
-            process_queue(r,I);
+            strcpy(r,a[a.size()-n].id);
+            strcat(r,char_more<char[3]>(std::to_string(a[a.size()-n].day)).get_char().data());
+            process_queue(r);
             queue_file.shift({ss,rr},{ss,a[a.size()-n]});
             return 0;
         }
         if (a[a.size()-n].state==1) {
             a[a.size()-n].state=2;
             char r[31];
-            strcpy(r,a[a.size()-n].from);
-            strcat(r,a[a.size()-n].to);
-            queue_storage.Val_delete(r,a[a.size()-n]);
+            strcpy(r,a[a.size()-n].id);
+            strcat(r,char_more<char[3]>(std::to_string(a[a.size()-n].day)).get_char().data());
+            queue_storage.Val_delete(r,{a[a.size()-n].queue_order,username,a.size()-n+1});
             queue_file.shift({ss,rr},{ss,a[a.size()-n]});
             return 0;
         }
-
-
         return -1;
-
     }
 
-void ticket::process_queue(char r[63],const int &I) {
-    auto p=queue_storage.search(r);
-    for (auto &x:p) {
-        if (x.state==1) {
-            int minseat(20000);
-            auto b=train_storage.read(x.address);
-            for (int i=I;i<b.num&&strcmp(b.station[i],x.to)!=0;i++) {
-                minseat=std::min(minseat,b.remain_seat[x.day][i]);
+void ticket::process_queue(char r[31]) {
+    for (auto p=queue_storage.search(r); auto & j : p) {
+        auto u=queue_file.search(j.username);
+        auto uu=u[j.pos-1];
+        if (u[j.pos-1].state==1) {
+            u[j.pos-1].state=0;
+            int minseat(200000);
+            auto b=train_storage.read(u[j.pos-1].address);
+            int I(0);
+            for (I=0;I<b.num-1&&strcmp(b.station[I],u[j.pos-1].from) != 0;I++) {}
+            for (int i=I;i<b.num&&strcmp(b.station[i],u[j.pos-1].to)!=0;i++) {
+                minseat=std::min(minseat,b.remain_seat[u[j.pos-1].day][i]);
             }
-            if (minseat==0||minseat<x.buy_num) {
+            if (minseat==0||minseat<u[j.pos-1].buy_num) {
                 continue;
             }
-            for (int i=I;i<b.num&&strcmp(b.station[i],x.to)!=0;i++) {
-                b.remain_seat[x.day][i]-=x.buy_num;
+            for (int i=I;i<b.num-1&&strcmp(b.station[i],u[j.pos-1].to)!=0;i++) {
+                b.remain_seat[u[j.pos-1].day][i]-=u[j.pos-1].buy_num;
             }
-            x.state=0;
-            train_storage.update(b,x.address);
-            auto q=queue_file.search(x.username);
-            for (auto &y:q) {
-                if (strcmp(x.id,y.id)==0) {
-                    queue y1(y.order,y.address,y.day,y.id,y.from,y.to,y.time1,y.time2,y.username,y.buy_num,y.price,0);
-                    queue_file.shift({y.username,y},{y.username,y1});
-                    break;
-                }
-            }
+            train_storage.update(b,u[j.pos-1].address);
+            queue_storage.Val_delete(r,j);
+            queue_file.shift({u[j.pos-1].username,uu},{u[j.pos-1].username,u[j.pos-1]});
         }
     }
-    queue_storage.update(p,r);
 }

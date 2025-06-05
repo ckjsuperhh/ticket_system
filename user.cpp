@@ -28,6 +28,9 @@ int user::add_user(char cur[21],char username[21], char password[31],char name[1
     if (cmd::check_username(cur)) {
         return -1;
     }
+    if (strcmp(username,cur)==0) {
+        return -1;
+    }
     if (const auto a=user_file.search(username);!a.empty()) {
         return -1;
     }
@@ -35,7 +38,7 @@ int user::add_user(char cur[21],char username[21], char password[31],char name[1
     if (login_state.find(cur)==login_state.end()) {//未登錄
         return -1;
     }
-    if (const auto p=user_storage.read(a[0]);p.privilege<privilege) {
+    if (const auto p=user_storage.read(a[0]);p.privilege<=privilege) {
         return -1;
     }
     user_file.insert(username,user_storage.size());

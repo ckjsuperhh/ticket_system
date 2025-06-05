@@ -207,7 +207,6 @@ int train::release_train(char id[21]) {
                 arrival_hour[J - 1], setup_minute[I], arrival_minute[J - 1],
                 arrival_nextday[J - 1], setup_nextday[I]
             });
-            auto dcgwi = transfer_file.search(char_more<char[63]>(str).get_char().data());
         }
     }
     return 0;
@@ -388,6 +387,13 @@ void train::calculate_time(int &month, int &date, int &hour, int &minute, const 
     if (const int next_day_time = 60 * (23 - hour) + (60 - minute); next_day_time > cross) {
         cross_time(hour, minute, cross);
     } else {
+        if (cross > 1440 + next_day_time) {
+            train::next_day(month, date);
+            train::next_day(month, date);
+            minute = hour = 0;
+            cross_time(hour, minute, cross - 1440 - next_day_time);
+            return;
+        }
         train::next_day(month, date);
         minute = hour = 0;
         cross_time(hour, minute, cross - next_day_time);
@@ -487,20 +493,19 @@ std::string train::query_ticket(char threshold[31], char destination[31], char t
     if (b.empty()) {
         return "0";
     }
-    int  cnt(0);
+    int cnt(0);
     for (auto x: b) {
         auto c = transfer_storage.read(x);
         if (strcmp(c.saledate[0], time) <= 0 && strcmp(c.saledate[1], time) >= 0) {
             int day = date(time, c.saledate[0]);
             auto d = train_storage.read(c.address);
             int min_seat = d.seatnum;
-            int min_time = 10001, min_cost = 100001;
             for (int i = c.I; i < c.J; i++) {
                 min_seat = std::min(min_seat, d.remain_seat[day][i]);
             }
-            if (min_seat == 0) {
-                continue;
-            }
+            // if (min_seat == 0) {
+            //     continue;
+            // }
             string s = time;
             s += " ";
             s += to_accurate_time(c.setup_hour, c.setup_minute);
@@ -525,9 +530,9 @@ std::string train::query_ticket(char threshold[31], char destination[31], char t
     }
     if (cnt != 1) {
         if (p == "time") {
-            sjtu::quick_sort(l, l + cnt , Less_time());
+            sjtu::quick_sort(l, l + cnt, Less_time());
         } else {
-            sjtu::quick_sort(l, l + cnt , Less_cost());
+            sjtu::quick_sort(l, l + cnt, Less_cost());
         }
     }
     std::string str = std::to_string(cnt);
@@ -581,6 +586,8 @@ std::string train::to_accurate_time(const int &hour, const int &minute) {
 }
 
 std::string train::query_transfer(char threshold[31], char destination[31], char time[6], const string &p) {
+    int time3_month,time3_date;
+    int pos1(0), pos2(0), minseat1(0), minseat2(0), timer(2000000), pricer(2000000);
     auto to = from_to_file.search(threshold);
     std::string str;
     int cnt(0);
@@ -601,39 +608,57 @@ std::string train::query_transfer(char threshold[31], char destination[31], char
         if (b2.empty()) {
             continue;
         }
-        int pos1(0), pos2(0), minseat1(0), minseat2(0), timer(20000), pricer(200000);
         char train_id1[21], train_id2[21];
         for (auto y1: b1) {
             if (auto c1 = transfer_storage.read(y1); strcmp(c1.saledate[0], time) <= 0 && strcmp(c1.saledate[1], time) >= 0) {
                 int day1 = date(time, c1.saledate[0]);
                 auto d1 = train_storage.read(c1.address);
                 int min_seat1 = d1.seatnum;
-                int min_time = 2000, min_cost = 200000;
-                for (int i = c1.I; i <= c1.J; i++) {
+                for (int i = c1.I; i < c1.J; i++) {
                     min_seat1 = std::min(min_seat1, d1.remain_seat[day1][i]);
                 }
-                if (min_seat1 == 0) {
-                    continue;
-                }
-                int delta1 = delta_time(c1.setup_hour, c1.arrival_hour, c1.setup_minute
-                                        , c1.arrival_minute, c1.arrival_nextday - c1.setup_nextday);
                 for (auto y2: b2) {
                     auto c2 = transfer_storage.read(y2);
-                    if (strcmp(c2.saledate[0], time) <= 0 && strcmp(c2.saledate[1], time) >= 0) {
-                        int day2 = date(time, c2.saledate[0]);
+                    if (strcmp(c1.id,c2.id)==0) {
+                        continue;
+                    }
+                    int month_ = time[1] - '0', date_ = 10 * (time[3] - '0') + time[4] - '0';
+                    int hour_ = c1.arrival_hour, minute_ = c1.arrival_minute;
+                    for (int i = 0; i < c1.arrival_nextday; i++) {
+                        next_day(month_, date_);
+                    }
+                    bool ok = false;
+                    int month__ = c2.saledate[0][1] - '0', date__ = 10 * (c2.saledate[0][3] - '0') + c2.saledate[0][4] - '0';
+                    int month___ = c2.saledate[1][1] - '0', date___ = 10 * (c2.saledate[1][3] - '0') + c2.saledate[1][4] - '0';
+                    if (month___ > month_ || (month___ == month_ && date___ > date_) || (month___ == month_ && date___ == date_ && c2.setup_hour > hour_) || (month___ == month_ && date___ == date_ && c2.setup_hour == hour_ && c2.setup_minute > minute_)) {
+                        ok = true;
+                        if (month__ < month_ || (month__ == month_ && date__ < date_) || (month__ == month_ && date__ == date_ && c2.setup_hour < hour_) || (month__ == month_ && date__ == date_ && c2.setup_hour == hour_ && c2.setup_minute < minute_)) {
+                            //如果首发时间比较靠前，那么查找需要的那一列火车
+                            if (c2.setup_hour < hour_||(c2.setup_hour == hour_ && c2.setup_minute < minute_)) {
+                                //在那一天时间，火车发车靠前，那么就取后一天，，否则就那一天
+                                next_day(month_,date_);
+                            }
+                        }else {
+                            month_ = month__;
+                            date_ = date__;
+                        }
+                    }
+                    if (ok == 1) {
                         auto d2 = train_storage.read(c2.address);
+                        int day2=c2.setup_nextday+date(month_,date_,d2.saledate[0]);
                         int min_seat2 = d2.seatnum;
-                        for (int i = c2.I; i <= c2.J; i++) {
+                        for (int i = c2.I; i < c2.J; i++) {
                             min_seat2 = std::min(min_seat2, d2.remain_seat[day2][i]);
                         }
-                        if (min_seat2 == 0) {
-                            continue;
-                        }
                         cnt++;
+                        int month____=month_,date____=date_;
+                        for (int i=0;i<c2.arrival_nextday;i++) {
+                            next_day(month____,date____);
+                        }
+                        int delta = delta_time(c1.setup_hour, c2.arrival_hour, c1.setup_minute
+                                                    , c2.arrival_minute, date(month____,date____,time));
                         if (p == "time") {
-                            int delta2 = delta_time(c2.setup_hour, c2.arrival_hour, c2.setup_minute
-                                                    , c2.arrival_minute, c2.arrival_nextday - c2.setup_nextday);
-                            if (delta1 + delta2 < timer) {
+                            if (delta< timer) {
                                 pos1 = y1;
                                 pos2 = y2;
                                 minseat1 = min_seat1;
@@ -641,8 +666,10 @@ std::string train::query_transfer(char threshold[31], char destination[31], char
                                 strcpy(train_id1, c1.id);
                                 strcpy(train_id2, c2.id);
                                 pricer = c1.price + c2.price;
-                                timer = delta1 + delta2;
-                            } else if (delta1 + delta2 == timer) {
+                                timer = delta;
+                                time3_date=date_;
+                                time3_month=month_;
+                            } else if (delta == timer) {
                                 if (c1.price + c2.price < pricer) {
                                     pos1 = y1;
                                     pos2 = y2;
@@ -651,7 +678,9 @@ std::string train::query_transfer(char threshold[31], char destination[31], char
                                     strcpy(train_id1, c1.id);
                                     strcpy(train_id2, c2.id);
                                     pricer = c1.price + c2.price;
-                                    timer = delta1 + delta2;
+                                    timer = delta;
+                                    time3_date=date_;
+                                    time3_month=month_;
                                 } else if (c1.price + c2.price < pricer) {
                                     if (strcmp(c1.id, train_id1) < 0) {
                                         pos1 = y1;
@@ -661,7 +690,9 @@ std::string train::query_transfer(char threshold[31], char destination[31], char
                                         strcpy(train_id1, c1.id);
                                         strcpy(train_id2, c2.id);
                                         pricer = c1.price + c2.price;
-                                        timer = delta1 + delta2;
+                                        timer = delta;
+                                        time3_date=date_;
+                                        time3_month=month_;
                                     } else if (strcmp(c1.id, train_id1) == 0) {
                                         if (strcmp(c2.id, train_id2) < 0) {
                                             pos1 = y1;
@@ -671,16 +702,15 @@ std::string train::query_transfer(char threshold[31], char destination[31], char
                                             strcpy(train_id1, c1.id);
                                             strcpy(train_id2, c2.id);
                                             pricer = c1.price + c2.price;
-                                            timer = delta1 + delta2;
+                                            timer = delta;
+                                            time3_date=date_;
+                                            time3_month=month_;
                                         }
                                     }
                                 }
                             }
                         } else if (p == "cost") {
                             if (c1.price + c2.price < pricer) {
-                                int delta2 = delta_time(c2.setup_hour,c2.arrival_hour , c2.setup_minute
-                                                        , c2.arrival_minute, c2.arrival_nextday - c2.setup_nextday);
-
                                 pos1 = y1;
                                 pos2 = y2;
                                 minseat1 = min_seat1;
@@ -688,11 +718,11 @@ std::string train::query_transfer(char threshold[31], char destination[31], char
                                 strcpy(train_id1, c1.id);
                                 strcpy(train_id2, c2.id);
                                 pricer = c1.price + c2.price;
-                                timer = delta1 + delta2;
+                                timer = delta;
+                                time3_date=date_;
+                                time3_month=month_;
                             } else if (c1.price + c2.price == pricer) {
-                                int delta2 = delta_time(c2.setup_hour,c2.arrival_hour , c2.setup_minute
-                                                        , c2.arrival_minute, c2.arrival_nextday - c2.setup_nextday);
-                                if (delta1 + delta2 < timer) {
+                                if (delta < timer) {
                                     pos1 = y1;
                                     pos2 = y2;
                                     minseat1 = min_seat1;
@@ -700,8 +730,10 @@ std::string train::query_transfer(char threshold[31], char destination[31], char
                                     strcpy(train_id1, c1.id);
                                     strcpy(train_id2, c2.id);
                                     pricer = c1.price + c2.price;
-                                    timer = delta1 + delta2;
-                                } else if (delta1 + delta2 == timer) {
+                                    timer = delta;
+                                    time3_date=date_;
+                                    time3_month=month_;
+                                } else if (delta== timer) {
                                     if (strcmp(c1.id, train_id1) < 0) {
                                         pos1 = y1;
                                         pos2 = y2;
@@ -710,7 +742,9 @@ std::string train::query_transfer(char threshold[31], char destination[31], char
                                         strcpy(train_id1, c1.id);
                                         strcpy(train_id2, c2.id);
                                         pricer = c1.price + c2.price;
-                                        timer = delta1 + delta2;
+                                        timer = delta;
+                                        time3_date=date_;
+                                        time3_month=month_;
                                     } else if (strcmp(c1.id, train_id1) == 0) {
                                         if (strcmp(c2.id, train_id2) < 0) {
                                             pos1 = y1;
@@ -720,7 +754,9 @@ std::string train::query_transfer(char threshold[31], char destination[31], char
                                             strcpy(train_id1, c1.id);
                                             strcpy(train_id2, c2.id);
                                             pricer = c1.price + c2.price;
-                                            timer = delta1 + delta2;
+                                            timer = delta;
+                                            time3_date=date_;
+                                            time3_month=month_;
                                         }
                                     }
                                 }
@@ -730,15 +766,9 @@ std::string train::query_transfer(char threshold[31], char destination[31], char
                 }
             }
         }
-        if (cnt == 0) {
-            return "0";
-        }
         auto c1 = transfer_storage.read(pos1);
         auto c2 = transfer_storage.read(pos2);
-
-        str = std::to_string(cnt);
-        str.push_back('\n');
-        str += train_id1;
+        str = train_id1;
         str.push_back(' ');
         str += threshold;
         str.push_back(' ');
@@ -764,16 +794,19 @@ std::string train::query_transfer(char threshold[31], char destination[31], char
         str.push_back(' ');
         str += c2.from;
         str.push_back(' ');
-        str += time;
+        str += to_date(time3_month,time3_date);
         str.push_back(' ');
         str += to_accurate_time(c2.setup_hour, c2.setup_minute);
         str += " -> ";
         str += destination;
         str.push_back(' ');
         if (c2.arrival_nextday - c2.setup_nextday == 0) {
-            str += time;
+            str += to_date(time3_month,time3_date);
         } else {
-            str += over_date(time, c2.arrival_nextday - c2.setup_nextday);
+            for (int i=0;i<c2.arrival_nextday - c2.setup_nextday;i++) {
+                next_day(time3_month,time3_date);
+            }
+            str += to_date(time3_month,time3_date);
         }
         str.push_back(' ');
         str += to_accurate_time(c2.arrival_hour, c2.arrival_minute);

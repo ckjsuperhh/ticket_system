@@ -10,6 +10,7 @@
 using namespace std;
 
 int main() {
+    // freopen("../testcases/43.in", "r", stdin);
     // sjtu::unordered_set<std::string> U;
     // U.insert("I_am_the_admin");
     // char u[21]="I_am_the_admin";
