@@ -2486,17 +2486,17 @@ struct char_31 {
 };
 
 struct queue {
-    int queue_order;
-    int order;
-    int address;
-    int day;
+    int queue_order{};
+    int order{};
+    int address{};
+    int day{};
     char id[21]{};
     char from[31]{}, to[31]{};
     char time1[13]{},time2[13]{};
     char username[21]{};
-    int buy_num;
-    int price;
-    int state;
+    int buy_num{};
+    int price{};
+    int state{};
     bool operator<(const queue &other) {
         if (order < other.order) {
             return true;

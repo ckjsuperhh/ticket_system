@@ -624,7 +624,7 @@ std::string train::query_transfer(char threshold[31], char destination[31], char
                     }
                     int month_ = time[1] - '0', date_ = 10 * (time[3] - '0') + time[4] - '0';
                     int hour_ = c1.arrival_hour, minute_ = c1.arrival_minute;
-                    for (int i = 0; i < c1.arrival_nextday; i++) {
+                    for (int i = 0; i < c1.arrival_nextday-c1.setup_nextday; i++) {
                         next_day(month_, date_);
                     }
                     bool ok = false;
@@ -635,7 +635,7 @@ std::string train::query_transfer(char threshold[31], char destination[31], char
                         if (month__ < month_ || (month__ == month_ && date__ < date_) || (month__ == month_ && date__ == date_ && c2.setup_hour < hour_) || (month__ == month_ && date__ == date_ && c2.setup_hour == hour_ && c2.setup_minute < minute_)) {
                             //如果首发时间比较靠前，那么查找需要的那一列火车
                             if (c2.setup_hour < hour_||(c2.setup_hour == hour_ && c2.setup_minute < minute_)) {
-                                //在那一天时间，火车发车靠前，那么就取后一天，，否则就那一天
+                                //在那一天时间，火车发车靠前，那么就取后一天，否则就那一天
                                 next_day(month_,date_);
                             }
                         }else {
@@ -652,7 +652,7 @@ std::string train::query_transfer(char threshold[31], char destination[31], char
                         }
                         cnt++;
                         int month____=month_,date____=date_;
-                        for (int i=0;i<c2.arrival_nextday;i++) {
+                        for (int i=0;i<c2.arrival_nextday-c2.setup_nextday;i++) {
                             next_day(month____,date____);
                         }
                         int delta = delta_time(c1.setup_hour, c2.arrival_hour, c1.setup_minute

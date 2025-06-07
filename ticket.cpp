@@ -39,10 +39,10 @@ std::string ticket::buy_ticket(char username[21],char id[21],char time[6],char s
         return "-1";
     }
     int month1=b.saledate[0][1]-'0',date1=(b.saledate[0][3]-'0')*10+b.saledate[0][4]-'0';
-    int hour1=(b.starttimes[0]-'0')*10+b.starttimes[1]-'0',minute1=(b.starttimes[3]-'0')*10+b.starttimes[4]-'0';
-    int month=month1,date=date1;
+    int hour1=(b.starttimes[0]-'0')*10+b.starttimes[1]-'0',minute1=(b.starttimes[3]-'0')*10+b.starttimes[4]-'0';//一个不断浮动以计算的时间的变量
+    int month=month1,date=date1;//用于指示变动了几天，便于保证末状态时间维护得正确
     train::calculate_time(month1,date1,hour1,minute1,sum_time);
-    int month2=b.saledate[1][1]-'0',date2=(b.saledate[1][3]-'0')*10+b.saledate[1][4]-'0';
+    int month2=b.saledate[1][1]-'0',date2=(b.saledate[1][3]-'0')*10+b.saledate[1][4]-'0';//末状态
     int next_(0);
     if (date!=date1) {
         next_++;
@@ -57,7 +57,7 @@ std::string ticket::buy_ticket(char username[21],char id[21],char time[6],char s
     std::string time1 = time;
     time1.push_back(' ');
     time1+=train::to_accurate_time(hour1,minute1);
-    if (train::to_date(month1,date1)<=time&&train::to_date(month2,date2)>=time) {
+    if (train::to_date(month1,date1)<=time&&train::to_date(month2,date2)>=time) {//如果能够成功购买票
         int day=train::date(time,b.saledate[0])-next_,minseat(b.seatnum),price(0),sumtime(0);
         int i=I;
         for (;i<b.num-1&&strcmp(b.station[i],end_station)!=0;i++) {
@@ -70,7 +70,7 @@ std::string ticket::buy_ticket(char username[21],char id[21],char time[6],char s
         }
         sumtime-=b.stopovertimes[i-1];
         train::calculate_time(month1,date1,hour1,minute1,sumtime);
-        int month3=time[1]-'0',date3=10*(time[3]-'0')+time[4]-'0';
+        int month3=time[1]-'0',date3=10*(time[3]-'0')+time[4]-'0';//末状态的天数，会跟着原本的计算来向后推移
         if (date!=date1) {
             train::next_day(month,date);
             train::next_day(month3,date3);
@@ -88,10 +88,10 @@ std::string ticket::buy_ticket(char username[21],char id[21],char time[6],char s
             }
             train_storage.update(b,a[0]);
             if (const auto queues =queue_file.search(username); queues.empty()) {
-                queue_file.insert(username,{-1,1,a[0],day,id,start_station,end_station,char_more<char[13]>(time1).get_char().data(),
+                queue_file.insert(username,{-1,1,a[0],day,char_more<char[21]>(id).get_char().data(),start_station,end_station,char_more<char[13]>(time1).get_char().data(),
                     char_more<char[13]>(time2).get_char().data(),char_more<char[21]>(username).get_char().data(),n,price,0});
             }else {
-                queue_file.insert(username,{-1,queues.size()+1,a[0],day,id,start_station,end_station,char_more<char[13]>(time1).get_char().data(),
+                queue_file.insert(username,{-1,queues.size()+1,a[0],day,char_more<char[21]>(id).get_char().data(),start_station,end_station,char_more<char[13]>(time1).get_char().data(),
                     char_more<char[13]>(time2).get_char().data(),char_more<char[21]>(username).get_char().data(),n,price,0});
             }
             return std::to_string(n*price);
@@ -106,18 +106,18 @@ std::string ticket::buy_ticket(char username[21],char id[21],char time[6],char s
         auto Int=train_queue_file.search(p);
         if (const auto queues =queue_file.search(username); queues.empty()) {
             order=1;
-            queue_file.insert(username,{Int.empty()?1:Int[0],1,a[0],day,id,start_station,end_station,char_more<char[31]>(time1).get_char().data(),
-                char_more<char[31]>(time2).get_char().data(),char_more<char[31]>(username).get_char().data(),n,price,1});
+            queue_file.insert(username,{Int.empty()?1:Int[0]+1,1,a[0],day,char_more<char[21]>(id).get_char().data(),start_station,end_station,char_more<char[13]>(time1).get_char().data(),
+                char_more<char[13]>(time2).get_char().data(),char_more<char[21]>(username).get_char().data(),n,price,1});
         }else {
             order=queues.size()+1;
-            queue_file.insert(username,{Int.empty()?1:Int[0],queues.size()+1,a[0],day,id,start_station,end_station,char_more<char[31]>(time1).get_char().data(),
-                char_more<char[31]>(time2).get_char().data(),char_more<char[31]>(username).get_char().data(),n,price,1});
+            queue_file.insert(username,{Int.empty()?1:Int[0]+1,queues.size()+1,a[0],day,char_more<char[21]>(id).get_char().data(),start_station,end_station,char_more<char[13]>(time1).get_char().data(),
+                char_more<char[13]>(time2).get_char().data(),char_more<char[21]>(username).get_char().data(),n,price,1});
         }
-        if ( Int.empty()) {
+        if (Int.empty()) {
             train_queue_file.insert(p,1);
             queue_storage.insert(p,{1,username,order});
         }else {
-            queue_storage.insert(p,{Int[0],username,order});
+            queue_storage.insert(p,{Int[0]+1,username,order});
             train_queue_file.shift({p,Int[0]},{p,Int[0]+1});
         }
         return"queue";
@@ -184,7 +184,7 @@ int ticket::refund_ticket(char username[21],const int & n) {
             a[a.size()-n].state=2;
             auto p=train_storage.read(a[a.size()-n].address);
             int I=0;
-            for (I=0;I<p.num&&strcmp(p.station[I],a[a.size()-n].from) != 0;I++) {}
+            for (I=0;I<p.num-1&&strcmp(p.station[I],a[a.size()-n].from) != 0;I++) {}
             for (int i=I;i<p.num-1&&strcmp(p.station[i],a[a.size()-n].to)!=0;i++) {
                 p.remain_seat[a[a.size()-n].day][i]+=a[a.size()-n].buy_num;
             }
@@ -192,8 +192,8 @@ int ticket::refund_ticket(char username[21],const int & n) {
             char r[31];
             strcpy(r,a[a.size()-n].id);
             strcat(r,char_more<char[3]>(std::to_string(a[a.size()-n].day)).get_char().data());
-            process_queue(r);
             queue_file.shift({ss,rr},{ss,a[a.size()-n]});
+            process_queue(r);
             return 0;
         }
         if (a[a.size()-n].state==1) {
@@ -213,17 +213,17 @@ void ticket::process_queue(char r[31]) {
         auto u=queue_file.search(j.username);
         auto uu=u[j.pos-1];
         if (u[j.pos-1].state==1) {
-            u[j.pos-1].state=0;
-            int minseat(200000);
+            int minseat(2000000);
             auto b=train_storage.read(u[j.pos-1].address);
             int I(0);
             for (I=0;I<b.num-1&&strcmp(b.station[I],u[j.pos-1].from) != 0;I++) {}
-            for (int i=I;i<b.num&&strcmp(b.station[i],u[j.pos-1].to)!=0;i++) {
+            for (int i=I;i<b.num-1&&strcmp(b.station[i],u[j.pos-1].to)!=0;i++) {
                 minseat=std::min(minseat,b.remain_seat[u[j.pos-1].day][i]);
             }
             if (minseat==0||minseat<u[j.pos-1].buy_num) {
                 continue;
             }
+            u[j.pos-1].state=0;
             for (int i=I;i<b.num-1&&strcmp(b.station[i],u[j.pos-1].to)!=0;i++) {
                 b.remain_seat[u[j.pos-1].day][i]-=u[j.pos-1].buy_num;
             }
