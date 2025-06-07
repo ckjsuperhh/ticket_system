@@ -82,6 +82,9 @@ std::string ticket::buy_ticket(char username[21],char id[21],char time[6],char s
         std::string time2 = train::to_date(month3, date3);
         time2+=" ";
         time2+=train::to_accurate_time(hour1,minute1);
+        if (strcmp(id,"MEIMPERTURBE")==0&&strcmp(start_station,"辽宁省鞍山市")==0&&strcmp(end_station,"河北省霸州市")==0) {
+            std::cerr<<time1<<" "<<time2<<std::endl;
+        }
         if (minseat>=n) {
             for (int i1=I;i1<b.num-1&&strcmp(b.station[i1],end_station)!=0;i1++) {
                 b.remain_seat[day][i1]-=n;
@@ -93,6 +96,9 @@ std::string ticket::buy_ticket(char username[21],char id[21],char time[6],char s
             }else {
                 queue_file.insert(username,{-1,queues.size()+1,a[0],day,char_more<char[21]>(id).get_char().data(),start_station,end_station,char_more<char[13]>(time1).get_char().data(),
                     char_more<char[13]>(time2).get_char().data(),char_more<char[21]>(username).get_char().data(),n,price,0});
+            }
+            if (strcmp(id,"MEIMPERTURBE")==0&&strcmp(start_station,"辽宁省鞍山市")==0&&strcmp(end_station,"河北省霸州市")==0) {
+                std::cerr<<time1<<" "<<time2<<std::endl;
             }
             return std::to_string(n*price);
         }
@@ -119,6 +125,9 @@ std::string ticket::buy_ticket(char username[21],char id[21],char time[6],char s
         }else {
             queue_storage.insert(p,{Int[0]+1,username,order});
             train_queue_file.shift({p,Int[0]},{p,Int[0]+1});
+        }
+        if (strcmp(id,"MEIMPERTURBE")==0&&strcmp(start_station,"辽宁省鞍山市")==0&&strcmp(end_station,"河北省霸州市")==0) {
+            std::cerr<<time1<<" "<<time2<<std::endl;
         }
         return"queue";
     }

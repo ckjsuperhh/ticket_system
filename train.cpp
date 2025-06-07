@@ -309,6 +309,15 @@ int train::date(const int month, const int date, const char d[6]) {
     if (init_month == 7 && month == 8) {
         return 31 - init_date + date;
     }
+    if (init_month == 6 && month == 9) {
+        return 92 - init_date + date;
+    }
+    if (init_month == 7 && month == 9) {
+        return 62 - init_date + date;
+    }
+    if (init_month == 8 && month == 9) {
+        return 31 - init_date + date;
+    }
     return 0; //無效語句
 }
 
@@ -386,12 +395,20 @@ void train::calculate_time(sjtu::vector<std::string> &a, int &month, int &date, 
 void train::calculate_time(int &month, int &date, int &hour, int &minute, const int cross) {
     if (const int next_day_time = 60 * (23 - hour) + (60 - minute); next_day_time > cross) {
         cross_time(hour, minute, cross);
-    } else {
+    } else if (cross==next_day_time) {
+        minute=hour=0;
+        train::next_day(month,date);
+    }else{
         if (cross > 1440 + next_day_time) {
             train::next_day(month, date);
             train::next_day(month, date);
             minute = hour = 0;
             cross_time(hour, minute, cross - 1440 - next_day_time);
+            return;
+        }if (cross==1440 + next_day_time) {
+            train::next_day(month, date);
+            train::next_day(month, date);
+            minute = hour = 0;
             return;
         }
         train::next_day(month, date);
@@ -588,6 +605,7 @@ std::string train::to_accurate_time(const int &hour, const int &minute) {
 std::string train::query_transfer(char threshold[31], char destination[31], char time[6], const string &p) {
     int time3_month,time3_date;
     int pos1(0), pos2(0), minseat1(0), minseat2(0), timer(2000000), pricer(2000000);
+    char train_id1[21], train_id2[21];
     auto to = from_to_file.search(threshold);
     std::string str;
     int cnt(0);
@@ -608,7 +626,6 @@ std::string train::query_transfer(char threshold[31], char destination[31], char
         if (b2.empty()) {
             continue;
         }
-        char train_id1[21], train_id2[21];
         for (auto y1: b1) {
             if (auto c1 = transfer_storage.read(y1); strcmp(c1.saledate[0], time) <= 0 && strcmp(c1.saledate[1], time) >= 0) {
                 int day1 = date(time, c1.saledate[0]);
@@ -645,7 +662,8 @@ std::string train::query_transfer(char threshold[31], char destination[31], char
                     }
                     if (ok == 1) {
                         auto d2 = train_storage.read(c2.address);
-                        int day2=c2.setup_nextday+date(month_,date_,d2.saledate[0]);
+                        int day2=-c2.setup_nextday+date(month_,date_,d2.saledate[0]);
+
                         int min_seat2 = d2.seatnum;
                         for (int i = c2.I; i < c2.J; i++) {
                             min_seat2 = std::min(min_seat2, d2.remain_seat[day2][i]);
@@ -766,57 +784,57 @@ std::string train::query_transfer(char threshold[31], char destination[31], char
                 }
             }
         }
-        auto c1 = transfer_storage.read(pos1);
-        auto c2 = transfer_storage.read(pos2);
-        str = train_id1;
-        str.push_back(' ');
-        str += threshold;
-        str.push_back(' ');
-        str += time;
-        str.push_back(' ');
-        str += to_accurate_time(c1.setup_hour, c1.setup_minute);
-        str += " -> ";
-        str += c1.to;
-        str.push_back(' ');
-        if (c1.arrival_nextday - c1.setup_nextday == 0) {
-            str += time;
-        } else {
-            str += over_date(time, c1.arrival_nextday - c2.setup_nextday);
-        }
-        str.push_back(' ');
-        str += to_accurate_time(c1.arrival_hour, c1.arrival_minute);
-        str.push_back(' ');
-        str += std::to_string(c1.price);
-        str.push_back(' ');
-        str += std::to_string(minseat1);
-        str.push_back('\n');
-        str += train_id2;
-        str.push_back(' ');
-        str += c2.from;
-        str.push_back(' ');
-        str += to_date(time3_month,time3_date);
-        str.push_back(' ');
-        str += to_accurate_time(c2.setup_hour, c2.setup_minute);
-        str += " -> ";
-        str += destination;
-        str.push_back(' ');
-        if (c2.arrival_nextday - c2.setup_nextday == 0) {
-            str += to_date(time3_month,time3_date);
-        } else {
-            for (int i=0;i<c2.arrival_nextday - c2.setup_nextday;i++) {
-                next_day(time3_month,time3_date);
-            }
-            str += to_date(time3_month,time3_date);
-        }
-        str.push_back(' ');
-        str += to_accurate_time(c2.arrival_hour, c2.arrival_minute);
-        str.push_back(' ');
-        str += std::to_string(c2.price);
-        str.push_back(' ');
-        str += std::to_string(minseat2);
     }
     if (cnt == 0) {
         return "0";
     }
+    auto c1 = transfer_storage.read(pos1);
+    auto c2 = transfer_storage.read(pos2);
+    str = train_id1;
+    str.push_back(' ');
+    str += threshold;
+    str.push_back(' ');
+    str += time;
+    str.push_back(' ');
+    str += to_accurate_time(c1.setup_hour, c1.setup_minute);
+    str += " -> ";
+    str += c1.to;
+    str.push_back(' ');
+    if (c1.arrival_nextday - c1.setup_nextday == 0) {
+        str += time;
+    } else {
+        str += over_date(time, c1.arrival_nextday - c1.setup_nextday);
+    }
+    str.push_back(' ');
+    str += to_accurate_time(c1.arrival_hour, c1.arrival_minute);
+    str.push_back(' ');
+    str += std::to_string(c1.price);
+    str.push_back(' ');
+    str += std::to_string(minseat1);
+    str.push_back('\n');
+    str += train_id2;
+    str.push_back(' ');
+    str += c2.from;
+    str.push_back(' ');
+    str += to_date(time3_month,time3_date);
+    str.push_back(' ');
+    str += to_accurate_time(c2.setup_hour, c2.setup_minute);
+    str += " -> ";
+    str += destination;
+    str.push_back(' ');
+    if (c2.arrival_nextday - c2.setup_nextday == 0) {
+        str += to_date(time3_month,time3_date);
+    } else {
+        for (int i=0;i<c2.arrival_nextday - c2.setup_nextday;i++) {
+            next_day(time3_month,time3_date);
+        }
+        str += to_date(time3_month,time3_date);
+    }
+    str.push_back(' ');
+    str += to_accurate_time(c2.arrival_hour, c2.arrival_minute);
+    str.push_back(' ');
+    str += std::to_string(c2.price);
+    str.push_back(' ');
+    str += std::to_string(minseat2);
     return str;
 }
