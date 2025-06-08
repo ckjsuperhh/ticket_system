@@ -50,6 +50,7 @@ function tmpdir () {
 }
 
 testdir="$(tmpdir)"
+echo $testdir
 cp "$exename" "$testdir/"
 exe="$testdir/$exename"
 cwd="$(pwd)"
@@ -72,6 +73,8 @@ for i in $list; do
   fi
   rm "$outfile" "$difffile"
 done
+
+env -C "$testdir" ls -lh
 
 rm -r "$testdir"
 echo "Testcase complete, answer correct."
