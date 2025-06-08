@@ -18,12 +18,13 @@ private:
 
     static std::string over_date(const char ac_date[6], int next_day);
 
-
 public:
     static std::string to_accurate_time(const int &hour, const int &minute);
 
-    static int date(const int month,const int date, const char d[6]) ;
+    static int date(const int month, const int date, const char d[6]);
+
     static int date(char d1[6], char d2[6]);
+
     static void next_day(int &month, int &date);
 
     static void calculate_time(sjtu::vector<std::string> &a, int &month, int &date, int &hour, int &minute, int traveltimes, int stopovertimes);

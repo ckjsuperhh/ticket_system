@@ -15,23 +15,26 @@ using std::string;
 using std::fstream;
 using std::ifstream;
 using std::ofstream;
+
 template<typename T1, typename T2>
 struct Pair {
     T1 first;
     T2 second;
 
     // 默认构造函数
-    constexpr Pair() : first(), second() {}
+    constexpr Pair() : first(), second() {
+    }
 
     // 普通构造函数（处理非数组类型）
     template<typename U1, typename U2,
-             std::enable_if_t<!std::is_array_v<U1> && !std::is_array_v<U2>, int> = 0>
-    constexpr Pair(U1&& a, U2&& b)
-        : first(std::forward<U1>(a)), second(std::forward<U2>(b)) {}
+        std::enable_if_t<!std::is_array_v<U1> && !std::is_array_v<U2>, int>  = 0>
+    constexpr Pair(U1 &&a, U2 &&b)
+        : first(std::forward<U1>(a)), second(std::forward<U2>(b)) {
+    }
 
     // 特化：第一个模板参数为字符数组（任意长度N）
     template<size_t N, typename U2>
-    constexpr Pair(char(&a)[N], U2&& b)
+    constexpr Pair(char (&a)[N], U2 &&b)
         : second(std::forward<U2>(b)) {
         // 静态断言确保T1是长度为N的char数组
         static_assert(std::is_same_v<T1, char[N]>, "Array length mismatch");
@@ -41,7 +44,7 @@ struct Pair {
 
     // 特化：第二个模板参数为字符数组（任意长度M）
     template<typename U1, size_t M>
-    constexpr Pair(U1&& a, char(&b)[M])
+    constexpr Pair(U1 &&a, char (&b)[M])
         : first(std::forward<U1>(a)) {
         static_assert(std::is_same_v<T2, char[M]>, "Array length mismatch");
         std::memcpy(second, b, M * sizeof(char));
@@ -49,12 +52,13 @@ struct Pair {
 
     // 特化：两个模板参数均为字符数组（N和M可不同）
     template<size_t N, size_t M>
-    constexpr Pair(char(&a)[N], char(&b)[M]) {
+    constexpr Pair(char (&a)[N], char (&b)[M]) {
         static_assert(std::is_same_v<T1, char[N]>, "First array length mismatch");
         static_assert(std::is_same_v<T2, char[M]>, "Second array length mismatch");
         std::memcpy(first, a, N * sizeof(char));
         std::memcpy(second, b, M * sizeof(char));
     }
+
     // 比较运算符
     friend bool operator==(const Pair &lhs, const Pair &rhs) {
         return lhs.first == rhs.first && lhs.second == rhs.second;
@@ -1220,9 +1224,11 @@ namespace sjtu {
         int size() const {
             return currentLength;
         }
+
         int capacity() const {
             return maxSize;
         }
+
         /**
          * clears the contents
          */
@@ -1395,7 +1401,7 @@ public:
     void initialise(const string &FN = "") {
         if (!FN.empty()) file_name = FN;
         fstream check_file;
-        check_file.open(file_name, std::ios::in|std::ios::out);
+        check_file.open(file_name, std::ios::in | std::ios::out);
         if (!check_file.good()) {
             // if constexpr (true){
             check_file.close();
@@ -1403,7 +1409,6 @@ public:
             int tmp = 0;
             for (int i = 0; i < info_len; ++i)
                 check_file.write(reinterpret_cast<char *>(&tmp), sizeof(int));
-
         }
         check_file.close();
         file.open(file_name, std::ios::in | std::ios::out);
@@ -1505,7 +1510,7 @@ public:
     void initialise(const string &FN = "") {
         if (!FN.empty()) file_name = FN;
         fstream check_file;
-        check_file.open(file_name, std::ios::in|std::ios::out);
+        check_file.open(file_name, std::ios::in | std::ios::out);
         if (!check_file.good()) {
             // if constexpr (true){
             check_file.close();
@@ -1513,7 +1518,6 @@ public:
             int tmp = 0;
             for (int i = 0; i < info_len; ++i)
                 check_file.write(reinterpret_cast<char *>(&tmp), sizeof(int));
-
         }
         check_file.close();
         file.open(file_name, std::ios::in | std::ios::out);
@@ -1555,12 +1559,13 @@ public:
         assert(file.good());
         return index;
     }
+
     int write(sjtu::vector<T> &t) {
         Leaf<T> tt;
-        tt.maxsize=t.capacity();
-        tt.current_size=t.size();
-        for (auto x:t) {
-            tt.value.push_back({x,true});
+        tt.maxsize = t.capacity();
+        tt.current_size = t.size();
+        for (auto x: t) {
+            tt.value.push_back({x, true});
         }
         assert(file.good());
         return write(tt);
@@ -1845,7 +1850,7 @@ public:
             if (!state) {
                 Leaf<T2> tmp = leaf_file.read(a.pointer_son[i]);
                 tmp.current_size = 0; //清空索引下的vector
-                leaf_file.update(tmp,a.pointer_son[i]);
+                leaf_file.update(tmp, a.pointer_son[i]);
                 return;
             } // 原本就有
             if (state > 0) {
@@ -1859,9 +1864,9 @@ public:
         insert(p2.first, p2.second);
     }
 
-    void update(sjtu::vector<T2> r,T1 index) {
+    void update(sjtu::vector<T2> r, T1 index) {
         if (const int depth = node_file.get_info(2); !depth)
-            return ;
+            return;
         const int now_node = search_to_leaf(index);
         auto a = node_file.read(now_node);
         const int num = son_number(a);
@@ -1869,14 +1874,13 @@ public:
             const int state = strcmp(a.reference[i], index);
             if (!state) {
                 Leaf<T2> tmp = leaf_file.read(a.pointer_son[i]);
-                a.pointer_son[i]=leaf_file.write(r);
-                node_file.update(a,now_node);
+                a.pointer_son[i] = leaf_file.write(r);
+                node_file.update(a, now_node);
             }
             if (state > 0)
-                return ;
+                return;
         }
     }
-
 };
 
 template<class T, int info_len = 2>
@@ -1899,7 +1903,7 @@ public:
     void initialise(const string &FN = "") {
         if (!FN.empty()) file_name = FN;
         fstream check_file;
-        check_file.open(file_name, std::ios::in|std::ios::out);
+        check_file.open(file_name, std::ios::in | std::ios::out);
         if (!check_file.good()) {
             // if constexpr (true){
             check_file.close();
@@ -1907,7 +1911,6 @@ public:
             int tmp = 0;
             for (int i = 0; i < info_len; ++i)
                 check_file.write(reinterpret_cast<char *>(&tmp), sizeof(int));
-
         }
         check_file.close();
         file.open(file_name, std::ios::in | std::ios::out);
@@ -1976,10 +1979,11 @@ public:
         return tmp;
     }
 };
+
 #include <algorithm>
 #include <iterator>
-namespace sjtu {
 
+namespace sjtu {
     template<typename Iterator, typename Compare>
     void quick_sort(Iterator first, Iterator last, Compare comp) {
         const int INSERTION_THRESHOLD = 16;
@@ -2006,7 +2010,7 @@ namespace sjtu {
         auto pivot = *last_elem;
 
         // 三路划分 (Dutch National Flag算法)
-        auto left = first;     // 小于区域的右边界
+        auto left = first; // 小于区域的右边界
         auto right = last_elem; // 大于区域的左边界
 
         for (auto i = first; i < right;) {
@@ -2425,17 +2429,18 @@ struct transfer_info {
     int setup_hour{}, setup_minute{};
     int arrival_hour{}, arrival_minute{};
     int arrival_nextday{}, setup_nextday{};
+
     transfer_info(char from[31], char to[31], int I, int J,
-        char id[21], const int &address, const int &price,
-        char start_sell[6], char end_sell[6], int setup_hour,
-        int arrival_hour, int setup_minute,int arrival_minute,
-        int arrival_nextday, int setup_nextday): I(I), J(J),address(address),
-                                                                                                                                                                                                                                                                      price(price), setup_hour(setup_hour),
-                                                                                                                                                                                                                                                                      arrival_hour(arrival_hour),
-                                                                                                                                                                                                                                                                      setup_minute(setup_minute),
-                                                                                                                                                                                                                                                                      arrival_minute(arrival_minute),
-                                                                                                                                                                                                                                                                      arrival_nextday(arrival_nextday),
-                                                                                                                                                                                                                                                                      setup_nextday(setup_nextday) {
+                  char id[21], const int &address, const int &price,
+                  char start_sell[6], char end_sell[6], int setup_hour,
+                  int arrival_hour, int setup_minute, int arrival_minute,
+                  int arrival_nextday, int setup_nextday): I(I), J(J), address(address),
+                                                           price(price), setup_hour(setup_hour),
+                                                           arrival_hour(arrival_hour),
+                                                           setup_minute(setup_minute),
+                                                           arrival_minute(arrival_minute),
+                                                           arrival_nextday(arrival_nextday),
+                                                           setup_nextday(setup_nextday) {
         strcpy(this->from, from), strcpy(this->to, to), strcpy(this->id, id), strcpy(saledate[0], start_sell), strcpy(saledate[1], end_sell);
     }
 
@@ -2464,7 +2469,9 @@ struct transfer_info {
 
 struct char_31 {
     char a[31]{};
-    char_31()=default;
+
+    char_31() = default;
+
     explicit char_31(const char b[31]) {
         strcpy(a, b);
     }
@@ -2472,6 +2479,7 @@ struct char_31 {
     bool operator<(const char b[31]) const {
         return strcmp(a, b) < 0;
     }
+
     bool operator<(const char_31 &b) const {
         return strcmp(a, b.a) < 0;
     }
@@ -2492,61 +2500,69 @@ struct queue {
     int day{};
     char id[21]{};
     char from[31]{}, to[31]{};
-    char time1[13]{},time2[13]{};
+    char time1[13]{}, time2[13]{};
     char username[21]{};
     int buy_num{};
     int price{};
     int state{};
+
     bool operator<(const queue &other) {
         if (order < other.order) {
             return true;
         }
         if (order == other.order) {
-            if (state<other.state) {
+            if (state < other.state) {
                 return true;
             }
         }
         return false;
     }
-    bool operator<(const queue &other)const  {
+
+    bool operator<(const queue &other) const {
         if (order < other.order) {
             return true;
         }
         if (order == other.order) {
-            if (state<other.state) {
+            if (state < other.state) {
                 return true;
             }
         }
         return false;
     }
-    queue() =default;
-    queue(int queue_order,int order,int address,int day,char id[21],
-    char from[31],char to[31],char time1[13],char time2[13],char username[21],
-    int buy_num,int price,int state):queue_order(queue_order),order(order),address(address),day(day),buy_num(buy_num),price(price),state(state) {
-        strcpy(this->id,id),strcpy(this->from,from),strcpy(this->to,to),strcpy(this->time1,time1),strcpy(this->time2,time2),strcpy(this->username,username);
+
+    queue() = default;
+
+    queue(int queue_order, int order, int address, int day, char id[21],
+          char from[31], char to[31], char time1[13], char time2[13], char username[21],
+          int buy_num, int price, int state): queue_order(queue_order), order(order), address(address), day(day), buy_num(buy_num), price(price), state(state) {
+        strcpy(this->id, id), strcpy(this->from, from), strcpy(this->to, to), strcpy(this->time1, time1), strcpy(this->time2, time2), strcpy(this->username, username);
     }
 };
 
-struct queue_info{
+struct queue_info {
     int order{};
     char username[21]{};
     int pos{};
-    queue_info()=default;
-    queue_info(int order,char username[21],int pos):order(order),pos(pos) {
-        strcpy(this->username,username);
+
+    queue_info() = default;
+
+    queue_info(int order, char username[21], int pos): order(order), pos(pos) {
+        strcpy(this->username, username);
     }
-    bool operator<(const queue_info&other)const {
-        if (order<other.order) {
+
+    bool operator<(const queue_info &other) const {
+        if (order < other.order) {
             return true;
         }
-        if (order==other.order) {
-            if (strcmp(username,other.username)<0) {
+        if (order == other.order) {
+            if (strcmp(username, other.username) < 0) {
                 return true;
             }
         }
         return false;
     }
 };
+
 inline BPT<char[21], int> user_file; //存儲用戶名到存儲地址的映射
 inline MemoryRiver_vector<user_info> user_storage; //利用地址存儲特定用户的info
 inline sjtu::unordered_set<std::string> login_state; //存儲有哪些處於登陸狀態
@@ -2557,7 +2573,7 @@ inline BPT<char[63], int> transfer_file; //两站(前後信息拼接起來)到�
 inline MemoryRiver_vector<transfer_info> transfer_storage; //換乘信息的存儲位置
 inline BPT<char[21], queue> queue_file; //用戶名到排隊信息
 inline BPT<char[31], queue_info> queue_storage; //車次與日期到排隊信息
-inline BPT<char[31],int> train_queue_file;//等车排队到第几位了
+inline BPT<char[31], int> train_queue_file; //等车排队到第几位了
 #pragma once
 
 #endif

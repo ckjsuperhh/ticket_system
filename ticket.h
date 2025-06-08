@@ -8,9 +8,12 @@
 
 class ticket {
 public:
-    static std::string buy_ticket(char username[21],char id[21],char time[6],char start_station[31],char end_station[31],const int & n,bool t);
-static std::string query_order(char username[21]);
-    static int refund_ticket(char username[21],const int & n);
+    static std::string buy_ticket(char username[21], char id[21], char time[6], char start_station[31], char end_station[31], const int &n, bool t);
+
+    static std::string query_order(char username[21]);
+
+    static int refund_ticket(char username[21], const int &n);
+
     static void process_queue(char r[63]);
 };
 #endif //TICKET_H
