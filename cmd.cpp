@@ -92,8 +92,8 @@ bool cmd::check_stopovertimes(const int x) {
 bool cmd::check_saledate(const char x[6]) {
     if (x[0] == '0' && (x[1] >= '6' && x[1] <= '8') && x[2] == '-') {
         std::string tmp;
-        tmp[0] = x[3];
-        tmp[1] = x[4];
+        tmp.push_back(x[3]);
+        tmp.push_back(x[4]);
         if (x[1] == '6') {
             if (std::stoi(tmp) < 31) {
                 return false;

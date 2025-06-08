@@ -23,8 +23,5 @@ int main() {
         if (ok or cin.eof()) {
             exit(0);
         }
-        // } catch (...) {
-        //     cout << "Invalid\n";
-        // }
     }
 }

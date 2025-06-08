@@ -18,9 +18,9 @@ std::string ticket::buy_ticket(char username[21], char id[21], char time[6], cha
     if (cmd::check_id(id)) {
         return "-1";
     }
-    if (cmd::check_saledate(time)) {
-        return "-1";
-    }
+    // if (cmd::check_saledate(time)) {
+    //     return "-1";
+    // }
     auto a = train_file.search(id);
     if (a.empty()) {
         return "-1";

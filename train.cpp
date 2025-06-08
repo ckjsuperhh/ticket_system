@@ -234,9 +234,9 @@ std::string train::query_train(char id[21], char data[6]) {
     if (cmd::check_id(id)) {
         return "-1";
     }
-    if (cmd::check_saledate(data)) {
-        return "-1";
-    }
+    // if (cmd::check_saledate(data)) {
+    //     return "-1";
+    // }
     auto a = train_file.search(id);
     if (a.empty()) {
         return "-1";

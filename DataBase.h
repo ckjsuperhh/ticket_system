@@ -1412,7 +1412,6 @@ public:
         }
         check_file.close();
         file.open(file_name, std::ios::in | std::ios::out);
-        std::cerr << "I, " << file_name << ", AM ALSO FUCKING INITIALIZED." << std::endl;
         assert(file.good());
     }
 
@@ -1521,7 +1520,6 @@ public:
         }
         check_file.close();
         file.open(file_name, std::ios::in | std::ios::out);
-        std::cerr << "I, " << file_name << ", AM ALSO FUCKING INITIALIZED." << std::endl;
         assert(file.good());
     }
 
@@ -1914,7 +1912,6 @@ public:
         }
         check_file.close();
         file.open(file_name, std::ios::in | std::ios::out);
-        std::cerr << "I, " << file_name << ", AM ALSO FUCKING INITIALIZED." << std::endl;
         assert(file.good());
     }
 
